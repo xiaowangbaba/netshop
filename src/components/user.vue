@@ -65,7 +65,30 @@
               >
               <!--同样的方法-->
               <template slot-scope="scope">
-                <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
+                <el-button type="primary" icon="el-icon-edit" size="mini" @click="transinfobyid(scope.row.id)"  ></el-button>
+                 <el-dialog title="修改用户" :visible.sync="visibleedit">
+                   <el-form :model="addForm" :rules="addFormrules" ref="editformrules">
+                     <el-form-item label="用户名" >
+                       <el-input v-model="addForm.username"  :disabled="true" autocomplete="off" ></el-input>
+                     </el-form-item>
+                   <!--  <el-form-item label="密码"  >
+                       <el-input v-model="addForm.password" autocomplete="off"></el-input>
+                     </el-form-item> -->
+                     <el-form-item label="邮箱"  prop="email">
+                       <el-input v-model="addForm.email" autocomplete="off" ></el-input>
+                     </el-form-item>
+                     <el-form-item label="电话"  prop="mobile">
+                       <el-input v-model="addForm.mobile" autocomplete="off"></el-input>
+                     </el-form-item>
+                     <el-form-item>
+                        <el-button @cilck="reseteditform">重置</el-button>
+                     </el-form-item>
+                   </el-form>
+                   <div slot="footer" class="dialog-footer">
+                     <el-button @click="visibleedit = false">取 消</el-button>
+                     <el-button type="primary" v-model="id" @click="submitvaild(id)">确 定</el-button>
+                   </div>
+                 </el-dialog>
                  <el-button type="danger" icon="el-icon-delete" size="mini"></el-button>
                  <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
                   <el-button type="warning" icon="el-icon-setting" size="mini"></el-button></el-tooltip>
@@ -138,9 +161,11 @@
          pagenum:1,
          pagesize:2
        },
+       id:'',
        userlist:[],
        total:0,
        adduser:false,
+       visibleedit:false,
        addForm:{
          username:'',
          password:'',
@@ -215,7 +240,35 @@
           this.getuserlist();
           console.log(res.data);
        })
-     }
+     },
+    async transinfobyid(id){
+      this.visibleedit=true;
+      this.id=id;
+      const {data:res}=await this.$http.get(`users/${id}`);
+      if(res.meta.status!==200)
+      return this.$message.error("不存在此用户");
+
+      this.addForm.username=res.data.username;
+      this.addForm.email=res.data.email;
+      this.addForm.mobile=res.data.mobile;
+    },
+    reseteditform(){
+      console.log(this);
+      this.$refs.editformrules.resetFields();
+    },
+    submitvaild(id1){
+      this.$refs.editformrules.validate(async vaild=>{
+        if(!vaild) retrun;
+        const {data:res}=await this.$http.put(`users/${id1}`,{
+          email:this.addForm.email,
+          mobile:this.addForm.mobile
+        });
+        if(res.meta.status!==200) return this.$message.error("修改用户失败");
+        this.$message.success("修改用户成功");
+        this.visibleedit=false;
+        this.getuserlist();
+      })
+    }
 
    }
 
